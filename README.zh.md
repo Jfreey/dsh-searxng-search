@@ -50,6 +50,23 @@ provider，指向你自己跑的 SearXNG。
 已有实例改 `config.baseUrl` 即可；实例在别的机器上（例如 NAS）时，用
 `ensure.enabled: false` 关掉守护，交给那台机器自己管。
 
+### 端口被占用
+
+安装器在目标端口被别的程序占着时会直接拒绝，并点名占用者：
+
+```text
+Port 8888 is taken by another process:
+  python3.1 (pid 835)
+Nothing was installed. Use another port, and set the plugin's baseUrl to match:
+  SEARXNG_PORT=8899 ./scripts/bootstrap-searxng.sh
+  config.baseUrl: 'http://127.0.0.1:8899'
+```
+
+如果占用者是**健康的实例**，或者是卡在重启循环里的 SearXNG 进程，则视为“自己人”，
+原地修复。**没有自动换端口的回退**——安装器和插件必须对同一个端口达成一致，所以端口
+在两边都保持为一个显式值。插件连不上配置的端口时，会扫 8888–8896，找出同时满足
+`/healthz` 可达且 `/config` 返回引擎列表的实例，并在错误里告诉你该改成哪个地址。
+
 ## 配置
 
 ```yaml

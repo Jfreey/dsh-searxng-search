@@ -54,6 +54,26 @@ SearXNG instance you run yourself.
 Point the plugin at an existing instance by editing `config.baseUrl`; point it at
 another machine and disable the supervisor with `ensure.enabled: false`.
 
+### Ports
+
+The installer refuses to run when the target port is taken by something that is
+not SearXNG, and names the process holding it:
+
+```text
+Port 8888 is taken by another process:
+  python3.1 (pid 835)
+Nothing was installed. Use another port, and set the plugin's baseUrl to match:
+  SEARXNG_PORT=8899 ./scripts/bootstrap-searxng.sh
+  config.baseUrl: 'http://127.0.0.1:8899'
+```
+
+A healthy instance on that port, or a SearXNG process stuck in a restart loop,
+counts as “ours” and is repaired in place. There is **no automatic port
+fallback**: the installer and the plugin have to agree on the port, so the port
+stays one explicit value on both sides. If the plugin is pointed at a dead port,
+its error scans 8888–8896 for an instance that answers `/healthz` *and* returns an
+engine list from `/config`, and names the address to use.
+
 ## Configuration
 
 ```yaml

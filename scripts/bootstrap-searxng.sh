@@ -76,6 +76,37 @@ case "$SEARXNG_OS" in
 esac
 command -v git >/dev/null || { echo "git is required." >&2; exit 1; }
 
+# A busy port is the most common first-run failure, and SearXNG only says so in
+# its log after a restart loop. Refuse early instead — unless the occupant is the
+# instance we are about to repair.
+port_busy() {
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -nP -iTCP:"$SEARXNG_PORT" -sTCP:LISTEN >/dev/null 2>&1
+  else
+    (ss -lnt 2>/dev/null || netstat -lnt 2>/dev/null) | grep -q ":$SEARXNG_PORT "
+  fi
+}
+
+if [ "$DRY_RUN" = 0 ] && port_busy; then
+  if curl -fsS -m 3 "http://127.0.0.1:$SEARXNG_PORT/healthz" >/dev/null 2>&1; then
+    say "port $SEARXNG_PORT already serves a healthy instance; repairing in place"
+  elif command -v lsof >/dev/null 2>&1 &&
+    lsof -nP -iTCP:"$SEARXNG_PORT" -sTCP:LISTEN -t 2>/dev/null |
+    xargs -I{} ps -o command= -p {} 2>/dev/null | grep -qi "searx"; then
+    # Our own server stuck in a restart loop: occupy-port but still ours to repair.
+    say "port $SEARXNG_PORT is held by a SearXNG process that is not healthy; repairing in place"
+  else
+    echo "Port $SEARXNG_PORT is taken by another process:" >&2
+    if command -v lsof >/dev/null 2>&1; then
+      lsof -nP -iTCP:"$SEARXNG_PORT" -sTCP:LISTEN | tail -n +2 | awk '{printf "  %s (pid %s)\n", $1, $2}' >&2
+    fi
+    echo "Nothing was installed. Use another port, and set the plugin's baseUrl to match:" >&2
+    echo "  SEARXNG_PORT=8899 $0" >&2
+    echo "  config.baseUrl: 'http://127.0.0.1:8899'" >&2
+    exit 1
+  fi
+fi
+
 # Only needed when a virtualenv has to be created; an existing one pins its own
 # interpreter, which is the common case on a machine with mise-managed pythons.
 pick_python() {
@@ -315,6 +346,12 @@ for _ in $(seq 1 60); do
   fi
   sleep 1
 done
+
+if grep -qi "address already in use\|Address already in use" "$SEARXNG_HOME/logs/server.log" 2>/dev/null; then
+  echo "SearXNG could not bind port $SEARXNG_PORT: the log reports \"Address already in use\"." >&2
+  echo "Another process holds it. Re-run with SEARXNG_PORT=<free port> and point config.baseUrl at it." >&2
+  exit 1
+fi
 
 echo "SearXNG did not answer $HEALTH within 60s; see $SEARXNG_HOME/logs/server.log" >&2
 exit 1

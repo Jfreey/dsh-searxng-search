@@ -283,6 +283,35 @@ export function apply(ctx, config = {}) {
   }
 
   /**
+   * Look for a SearXNG instance on nearby loopback ports.
+   *
+   * Only runs after a failure, to turn "unreachable" into something actionable:
+   * a port clash is the usual cause, and the person reading the error should not
+   * have to guess which port the other instance took. A candidate counts only if
+   * it answers `/healthz` *and* `/config` returns an engine list, so an unrelated
+   * service on a nearby port is never reported as a find.
+   *
+   * @returns {Promise<number[]>} ports that answered as SearXNG
+   */
+  const discover = async () => {
+    const configured = Number(new URL(baseUrl).port || 80)
+    const found = []
+    for (let port = 8888; port <= 8896; port += 1) {
+      if (port === configured) continue
+      try {
+        const health = await fetch(`http://127.0.0.1:${port}/healthz`, { signal: AbortSignal.timeout(400) })
+        if (!health.ok) continue
+        const config = await fetch(`http://127.0.0.1:${port}/config`, { signal: AbortSignal.timeout(800) })
+        const body = await config.json()
+        if (body !== null && typeof body === 'object' && Array.isArray(body.engines)) found.push(port)
+      } catch {
+        // not a SearXNG, or nothing there
+      }
+    }
+    return found
+  }
+
+  /**
    * Bring the server up if it is down, waiting at most startupTimeoutMs.
    * Concurrent searches share one recovery attempt.
    * @returns {Promise<void>}
@@ -330,7 +359,19 @@ export function apply(ctx, config = {}) {
    * @param {AbortSignal} [signal] caller cancellation
    */
   const search = async (request, signal) => {
-    await ensureUp()
+    try {
+      await ensureUp()
+    } catch (error) {
+      const elsewhere = await discover()
+      if (elsewhere.length > 0) {
+        throw new Error(
+          `${error.message} A SearXNG instance does answer on ${elsewhere
+            .map((port) => `http://127.0.0.1:${port}`)
+            .join(', ')}; set config.baseUrl to that address.`,
+        )
+      }
+      throw error
+    }
 
     const wanted = Math.min(providerMax, Math.max(1, request.maxResults ?? providerMax))
     const url = new URL(`${baseUrl}/search`)
