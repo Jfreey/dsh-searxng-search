@@ -2,10 +2,9 @@
 
 English | [中文](README.zh.md)
 
-Local [SearXNG](https://github.com/searxng/searxng) as the `web_search` backend for
-[DeepSeek Harness](https://github.com/deepseek-ai) — a provider, a supervisor, an
-installer, and a settings page that measures which engines your network can
-actually reach.
+One-click local search engine for [DeepSeek Harness](https://github.com/deepseek-ai): free, fast,
+and reliable. It installs [SearXNG](https://github.com/searxng/searxng) on your machine, keeps it
+running, and points `web_search` at it — no API key, no subscription.
 
 ![Engine page, English](assets/screenshot-en.png)
 

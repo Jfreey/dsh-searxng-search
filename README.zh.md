@@ -2,9 +2,9 @@
 
 [English](README.md) | 中文
 
-把本地 [SearXNG](https://github.com/searxng/searxng) 接成 [DeepSeek Harness](https://github.com/deepseek-ai)
-的 `web_search` 后端：一个 provider、一层守护、一个安装脚本，外加一个按当前网络
-实测引擎的设置页。
+给 [DeepSeek Harness](https://github.com/deepseek-ai) 的一键本地搜索：免费、快捷、有效。
+它在你自己机器上装好 [SearXNG](https://github.com/searxng/searxng)、保持它活着，再把
+`web_search` 指过去——不要 API key，不要订阅。
 
 ![引擎页，英文](assets/screenshot-en.png)
 

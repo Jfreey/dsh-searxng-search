@@ -1,7 +1,7 @@
 {
   "name": "dsh-searxng-search",
   "version": "0.4.3",
-  "description": "Local SearXNG for DeepSeek Harness: web_search provider, supervision, installers for macOS/Linux, and a Settings page that probes engines and manages the outbound proxy.",
+  "description": "One-click local search engine: free, fast, and reliable web_search for your agent.",
   "type": "module",
   "exports": {
     ".": "./index.js",
