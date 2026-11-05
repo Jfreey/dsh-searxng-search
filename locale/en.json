@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "SearXNG web search",
+    "description": "Points the web_search tool at the local SearXNG instance, keeps that server running, and ships a one-shot installer."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "SearXNG 联网搜索",
+    "description": "把 web_search 工具接到本机 SearXNG，负责让服务保持可用，并附带一键安装脚本。"
+  }
+}

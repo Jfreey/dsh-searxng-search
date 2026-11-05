@@ -1,0 +1,53 @@
+# SearXNG search bundle.
+#
+# The base layer pins the web service to `deepseek-official`, whose provider
+# needs DEEPSEEK_API_KEY; without that credential every step hides web_search.
+# This bundle registers a credential-free provider and repoints the service at
+# it, restating the untouched fetch pin because a patch replaces a row's whole
+# config rather than merging into it.
+
+- id: web
+  config:
+    searchProvider: searxng
+    fetchProvider: http
+
+- insert:
+    - id: searxng-search
+      name: 'dsh-searxng-search'
+      config:
+        # Local metasearch instance (SearXNG, JSON format enabled).
+        baseUrl: 'http://127.0.0.1:8888'
+        # Provider id the web service pins; the tool surface never sees it.
+        id: searxng
+        # Sources kept per query before the seam applies its own maxResults cap.
+        maxResults: 20
+        timeoutMs: 15000
+        safesearch: 0
+
+        # Supervision: a search that finds the server down starts it, waits for
+        # health, and then runs. Installation is not done here — run the bundled
+        # installer once and it writes the matching supervisor:
+        #   macOS   scripts/bootstrap-searxng.sh    -> LaunchAgent label
+        #   Linux   scripts/bootstrap-searxng.sh    -> systemd user unit
+        #   Windows scripts/bootstrap-searxng.ps1   -> scheduled task
+        ensure:
+          enabled: true
+          healthPath: /healthz
+          probeTimeoutMs: 1500
+          startupTimeoutMs: 20000
+          probeIntervalMs: 400
+          # Do not retry a failed start more often than this.
+          retryCooldownMs: 15000
+          # macOS: launchd owns the server (survives plugin unload and login).
+          launchAgent: com.searxng.server
+          # Linux: `systemctl --user restart`, then `systemctl restart`.
+          systemdUnit: ''
+          # Windows: a per-user scheduled task needs no elevation; a service does.
+          windowsTask: ''
+          windowsService: ''
+          # Universal fallback: this plugin spawns the command and terminates it
+          # again when the plugin unloads. Leave empty when a supervisor exists.
+          command: ''
+          args: []
+          cwd: ''
+          env: {}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Local SearXNG search">
+  <rect width="64" height="64" rx="12" fill="#14161a"/>
+  <circle cx="27" cy="27" r="13" fill="none" stroke="#e6e8eb" stroke-width="3.5"/>
+  <line x1="36.5" y1="36.5" x2="47" y2="47" stroke="#e6e8eb" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="27" cy="27" r="2.6" fill="#5b8def"/>
+  <circle cx="21" cy="33" r="1.9" fill="#8b929c"/>
+  <circle cx="33" cy="21" r="1.9" fill="#8b929c"/>
+</svg>

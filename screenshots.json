@@ -1,0 +1,18 @@
+{
+  "screenshots": [
+    {
+      "file": "assets/screenshot-en.png",
+      "label": {
+        "en": "Engine page, English",
+        "zh": "引擎页，英文"
+      }
+    },
+    {
+      "file": "assets/screenshot-zh.png",
+      "label": {
+        "en": "Engine page, Chinese",
+        "zh": "引擎页，中文"
+      }
+    }
+  ]
+}
