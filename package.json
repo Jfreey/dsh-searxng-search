@@ -1,7 +1,7 @@
 {
   "name": "dsh-searxng-search",
   "version": "0.4.3",
-  "description": "One-click local search engine: free, fast, and reliable web_search for your agent.",
+  "description": "One-click local search engine: no API key, free, no tracking. Aggregates several fast engines and picks the best route for your network.",
   "type": "module",
   "exports": {
     ".": "./index.js",

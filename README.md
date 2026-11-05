@@ -2,9 +2,17 @@
 
 English | [中文](README.zh.md)
 
-One-click local search engine for [DeepSeek Harness](https://github.com/deepseek-ai): free, fast,
-and reliable. It installs [SearXNG](https://github.com/searxng/searxng) on your machine, keeps it
-running, and points `web_search` at it — no API key, no subscription.
+One-click local search engine for [DeepSeek Harness](https://github.com/deepseek-ai). It installs
+[SearXNG](https://github.com/searxng/searxng) on your machine, keeps it running, and points
+`web_search` at it.
+
+- **No API key.** Nothing to sign up for, no vendor credential to store — search works the moment
+  it installs.
+- **Free.** Self-hosted: no subscription, no per-query billing, no quota.
+- **Best route, measured not guessed.** The settings page probes every enabled engine on your own
+  network, scores reachability, latency and yield, and recommends the working set in one click.
+- **Clean results.** SearXNG aggregates several fast engines (Bing, Sogou, 360search, …) with no
+  ads, no tracking, and no redirect wrappers.
 
 ![Engine page, English](assets/screenshot-en.png)
 

@@ -2,9 +2,15 @@
 
 [English](README.md) | 中文
 
-给 [DeepSeek Harness](https://github.com/deepseek-ai) 的一键本地搜索：免费、快捷、有效。
-它在你自己机器上装好 [SearXNG](https://github.com/searxng/searxng)、保持它活着，再把
-`web_search` 指过去——不要 API key，不要订阅。
+给 [DeepSeek Harness](https://github.com/deepseek-ai) 的一键本地搜索。它在你自己机器上装好
+[SearXNG](https://github.com/searxng/searxng)、保持它活着，再把 `web_search` 指过去。
+
+- **无需 API。** 不用注册、不用存任何厂商密钥，装完就能搜。
+- **完全免费。** 自己托管：没有订阅、没有按次计费、没有额度。
+- **自动选最佳线路（靠实测，不靠猜）。** 设置页在你自己的网络上逐个实测引擎，按应答、延迟、
+  产出打分，一键选出能用的组合。
+- **结果干净。** SearXNG 聚合多个高效引擎（Bing、Sogou、360search 等），无广告、无追踪、
+  无跳转包装。
 
 ![引擎页，英文](assets/screenshot-en.png)
 
