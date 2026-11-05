@@ -49,7 +49,7 @@ Pick one:
      scripts/bootstrap-searxng.sh inside it, or this script from inside WSL.
   2. Docker Desktop: run the upstream SearXNG image.
   3. Keep SearXNG on a Linux or macOS host and point the DSH plugin at it with
-     config.baseUrl, e.g. http://192.168.1.50:8888.
+     config.baseUrl, e.g. http://searxng.local:8888.
 "@
 }
 
