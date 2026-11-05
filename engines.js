@@ -61,56 +61,7 @@ function isEngineField(line) {
   return /^ {2}\S/.test(line) || /^ {4}\S/.test(line)
 }
 
-/**
- * Replace the `use_default_settings.engines.keep_only` list with `engines`.
- * Missing sections are inserted, so a hand-written settings file still works.
- * @param {string} text current settings.yml
- * @param {string[]} engines engine names to keep
- * @returns {string} patched settings.yml
- */
-export function writeKeepOnly(text, engines) {
-  const lines = text.split('\n')
-  const block = ['    keep_only:', ...engines.map((name) => `      - ${name}`)]
 
-  const header = lines.findIndex((line) => /^    keep_only:\s*$/.test(line))
-  if (header !== -1) {
-    let end = header + 1
-    while (end < lines.length && /^      - /.test(lines[end])) end += 1
-    lines.splice(header, end - header, ...block)
-    return lines.join('\n')
-  }
-
-  const useDefaults = lines.findIndex((line) => /^use_default_settings:\s*$/.test(line))
-  if (useDefaults === -1) {
-    lines.unshift('use_default_settings:', '  engines:', ...block)
-    return lines.join('\n')
-  }
-  lines.splice(useDefaults + 1, 0, '  engines:', ...block)
-  return lines.join('\n')
-}
-
-/**
- * Replace the top-level `engines:` list with explicit enables for `engines`.
- * @param {string} text current settings.yml
- * @param {string[]} engines engine names to enable
- * @returns {string} patched settings.yml
- */
-export function writeEngineList(text, engines) {
-  const lines = text.split('\n')
-  const block = engines.flatMap((name) => [`  - name: ${name}`, '    disabled: false'])
-
-  const header = lines.findIndex((line) => /^engines:\s*$/.test(line))
-  if (header === -1) {
-    while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop()
-    lines.push('', '# Written by dsh-searxng-search.', 'engines:', ...block, '')
-    return lines.join('\n')
-  }
-
-  let end = header + 1
-  while (end < lines.length && (isEngineItem(lines[end]) || isEngineField(lines[end]))) end += 1
-  lines.splice(header + 1, end - header - 1, ...block)
-  return lines.join('\n')
-}
 
 /**
  * Set or clear the `outgoing.proxies` block SearXNG uses for engine requests.
@@ -197,26 +148,6 @@ export function measure(body, latencyMs, engine) {
   return { ok: true, latencyMs, results, error: undefined }
 }
 
-/**
- * Remove the `use_default_settings.engines.keep_only` whitelist.
- *
- * `keep_only` is a one-way door: once written, `/config` only lists the kept
- * engines, so every other engine disappears from the UI and cannot be turned
- * back on. The page therefore migrates an install to explicit per-engine
- * switches the first time it applies a roster.
- *
- * @param {string} text current settings.yml
- * @returns {string} settings.yml without the whitelist
- */
-export function stripKeepOnly(text) {
-  const lines = text.split('\n')
-  const header = lines.findIndex((line) => /^    keep_only:\s*$/.test(line))
-  if (header === -1) return text
-  let end = header + 1
-  while (end < lines.length && /^      - /.test(lines[end])) end += 1
-  lines.splice(header, end - header)
-  return lines.join('\n')
-}
 
 /**
  * Collapse `use_default_settings` to plain `true`.
