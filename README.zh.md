@@ -127,7 +127,7 @@ Nothing was installed. Use another port, and set the plugin's baseUrl to match:
 
 ![引擎页，中文](assets/screenshot-zh.png)
 
-**测试**：对 `general` 类别里已启用的引擎各发一次查询，三路并发，按 0–100 打分：
+打开页面时会**自动测试你已经勾选的引擎**，所以表格不会是空的；之后可以随时重测。按 0–100 打分：
 
 | 分项 | 分值 | 规则 |
 |---|---|---|
@@ -137,6 +137,10 @@ Nothing was installed. Use another port, and set the plugin's baseUrl to match:
 
 这是**可用度**，不是准确率：没有任何环节拿引擎的答案去跟标准答案比对。准确率需要
 标注语料或跨引擎一致性采样，页面不假装自己有。
+
+评分之上会给出两类建议——**根本没应答**的（CAPTCHA、被拦、被挂起）和**慢于 5 秒**的，
+并配一个「按建议调整勾选」按钮，只取消这两类。**0 条结果不算建议**：探针只问一个短词，
+汇率或翻译类引擎在 5 毫秒内返回空结果是正常的，这类只作为提示列出。
 
 **应用**会为每个引擎写一条显式开关（`- name: "<引擎>"` + `disabled: true|false`），
 并移除 `use_default_settings.engines.keep_only`。那个白名单是单向门——写进去之后

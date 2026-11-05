@@ -72,6 +72,15 @@ window.__ModuleLoader__.load({
       err_UNHEALTHY: '实例没能在重启后恢复，已回滚到上一份配置。',
       err_INTERNAL: '插件内部错误，详情看宿主日志。',
       err_NETWORK: '连不上本机 SearXNG。',
+      autoTesting: '正在测试已勾选的引擎…',
+      adviceTitle: '建议',
+      adviceAllGood: '已勾选的引擎全部可用。',
+      adviceOff: '建议关闭',
+      adviceReasonBlocked: '被拦截',
+      adviceReasonEmpty: '没有结果',
+      adviceReasonSlow: '太慢',
+      adviceQuiet: '这些返回 0 条，多半是探针词不适用，不代表不可用',
+      adviceApply: '按建议调整勾选',
     }
 
     const en = {
@@ -131,6 +140,15 @@ window.__ModuleLoader__.load({
       err_UNHEALTHY: 'The instance did not come back after the restart; the previous settings were restored.',
       err_INTERNAL: 'Internal plugin error; see the host log.',
       err_NETWORK: 'Cannot reach the local SearXNG.',
+      autoTesting: 'Probing the selected engines…',
+      adviceTitle: 'Suggestions',
+      adviceAllGood: 'Every selected engine answered.',
+      adviceOff: 'Turn off',
+      adviceReasonBlocked: 'blocked',
+      adviceReasonEmpty: 'no results',
+      adviceReasonSlow: 'slow',
+      adviceQuiet: 'Zero results here usually means the probe query does not fit these engines, not that they are broken',
+      adviceApply: 'Select the working set',
     }
 
     const CSS = `
@@ -167,6 +185,8 @@ window.__ModuleLoader__.load({
 .sx-note{color:var(--dsw-alias-label-tertiary);font-size:11px}
 .sx-msg{padding:6px 10px;border:1px solid var(--sx-line);border-left:2px solid var(--sx-brand);background:var(--dsw-alias-bg-layer-1);font-size:12px}
 .sx-msg[data-kind=error]{border-left-color:var(--sx-error);color:var(--dsw-alias-label-primary)}
+.sx-advice{display:flex;flex-direction:column;gap:2px}
+.sx-advice__row{display:grid;grid-template-columns:minmax(120px,1.2fr) 1fr;gap:8px;align-items:baseline}
 .sx-pick{accent-color:var(--sx-brand);margin:0;cursor:pointer}
 `
 
@@ -242,18 +262,34 @@ window.__ModuleLoader__.load({
         load()
       }, [load])
 
+      // Opening the page should not show an empty table: measure the engines the
+      // user already has checked, once per mount. Failures stay in the table and
+      // in the advice block instead of interrupting the page.
+      const autoProbed = React.useRef(false)
+      React.useEffect(() => {
+        if (state.phase !== 'ready' || autoProbed.current) return
+        autoProbed.current = true
+        if (state.data.probe !== null) return
+        const enabled = state.data.engines.filter((engine) => engine.enabled).map((engine) => engine.name)
+        if (enabled.length === 0) return
+        probe(enabled)
+      }, [state.phase, state.data])
+
       const scored = new Map()
       for (const result of state.data?.probe?.results ?? []) scored.set(result.name, result)
 
-      const probe = async () => {
+      const probe = async (targets) => {
         setBusy('probe')
         setMessage(null)
         try {
-          const data = await request('probe', {})
-          const recommended = new Set(data.recommended ?? [])
-          setState((current) => ({ ...current, data: { ...current.data, probe: { at: data.at, query: data.query, tookMs: data.tookMs, results: data.results } } }))
-          if (recommended.size > 0) setSelected(recommended)
-          setMessage({ kind: 'ok', text: `${t('recommended')}: ${[...recommended].join(', ') || '—'}` })
+          const data = await request('probe', targets === undefined ? {} : { engines: targets })
+          // A probe only measures. Changing the checkboxes here would undo a
+          // deliberate selection (and the automatic probe on open would rewrite
+          // it silently); `selectRecommended` is the explicit way to adopt it.
+          setState((current) => ({
+            ...current,
+            data: { ...current.data, probe: { at: data.at, query: data.query, tookMs: data.tookMs, results: data.results } },
+          }))
         } catch (error) {
           setMessage({ kind: 'error', text: `${t('errorTitle')}: ${explain(error, t)}` })
         } finally {
@@ -349,6 +385,27 @@ window.__ModuleLoader__.load({
       const categoryLabel = (key) => {
         const label = t(`cat_${key.replace(/[^a-z]+/gi, '_')}`)
         return label.startsWith('cat_') ? key : label
+      }
+
+      // Which of the selected engines are worth turning off, and why.
+      //
+      // Only two facts justify that advice: the engine did not answer (blocked),
+      // or it answered too slowly to be useful. Zero results is deliberately NOT
+      // advice — the probe asks one short query, so a currency or translation
+      // engine legitimately returns nothing in 5 ms while working perfectly.
+      const advice = []
+      const quiet = []
+      for (const engine of data.engines) {
+        if (!selected.has(engine.name)) continue
+        const result = scored.get(engine.name)
+        if (result === undefined) continue
+        if (!result.ok) {
+          advice.push({ name: engine.name, reason: 'adviceReasonBlocked', detail: result.error })
+        } else if (result.latencyMs > 5000) {
+          advice.push({ name: engine.name, reason: 'adviceReasonSlow', detail: `${(result.latencyMs / 1000).toFixed(1)} s` })
+        } else if (result.results === 0) {
+          quiet.push(engine.name)
+        }
       }
 
       const grouped = new Map()
@@ -453,13 +510,47 @@ window.__ModuleLoader__.load({
         probeInfo
           ? h(
               'div',
-              { className: 'sx-note' },
-              ...probeInfo.results
-                .filter((result) => !result.ok)
-                .slice(0, 6)
-                .map((result, index) => h('div', { className: 'sx-why', key: `${result.name}-${index}` }, `${result.name}: ${result.error}`)),
+              { className: 'sx-box' },
+              h(
+                'div',
+                { className: 'sx-box__head' },
+                t('adviceTitle'),
+                advice.length === 0 ? null : h('span', { className: 'sx-group__count' }, String(advice.length)),
+              ),
+              advice.length === 0
+                ? h('div', { className: 'sx-note' }, t('adviceAllGood'))
+                : h(
+                    'div',
+                    { className: 'sx-advice' },
+                    ...advice.map((item) =>
+                      h(
+                        'div',
+                        { className: 'sx-advice__row', key: item.name },
+                        h('span', { className: 'sx-name' }, item.name),
+                        h('span', { className: 'sx-note' }, `${t('adviceOff')} · ${t(item.reason)}${item.detail ? ` (${item.detail})` : ''}`),
+                      ),
+                    ),
+                  ),
+              quiet.length === 0
+                ? null
+                : h('div', { className: 'sx-note' }, `${t('adviceQuiet')}: ${quiet.join(', ')}`),
+              advice.length === 0
+                ? null
+                : h(
+                    'button',
+                    {
+                      className: 'sx-btn',
+                      onClick: () => {
+                        const bad = new Set(advice.map((item) => item.name))
+                        setSelected(new Set([...selected].filter((name) => !bad.has(name))))
+                      },
+                    },
+                    t('adviceApply'),
+                  ),
             )
-          : null,
+          : busy === 'probe'
+            ? h('div', { className: 'sx-note' }, t('autoTesting'))
+            : null,
         h(
           'div',
           { className: 'sx-box' },

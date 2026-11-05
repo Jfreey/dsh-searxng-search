@@ -140,8 +140,8 @@ of a silently missing tool.
 
 ![Engine page, Chinese](assets/screenshot-zh.png)
 
-**Probe** runs one query per enabled engine in the `general` category, three at a
-time, and scores each result 0–100:
+The page probes **the engines you already have checked** as soon as it opens, so
+the table is never empty, and re-probes on demand. Each result is scored 0–100:
 
 | Component | Points | Rule |
 |---|---|---|
@@ -152,6 +152,13 @@ time, and scores each result 0–100:
 That is a **usability** score, not accuracy: nothing compares an engine's answers
 with ground truth. Accuracy would need a labelled corpus or cross-engine agreement
 sampling; the page does not pretend to have it.
+
+Above the score, two things are called out as advice — an engine that did **not
+answer** (CAPTCHA, blocked, suspended) and one that answered **slower than 5 s**.
+Both come with a one-click “select the working set” that only unchecks those.
+Zero results is *not* advice: the probe asks one short query, so a currency or
+translation engine legitimately returns nothing in 5 ms while working fine — those
+are listed as a note instead.
 
 **Apply** writes one explicit switch per engine (`- name: "<engine>"` +
 `disabled: true|false`) and drops `use_default_settings.engines.keep_only`. The
