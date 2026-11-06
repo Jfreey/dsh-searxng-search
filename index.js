@@ -441,15 +441,43 @@ export function apply(ctx, config = {}) {
 
   // The settings page reads and rewrites the instance's own settings file, so it
   // needs the path and the same restart path every other recovery uses.
-  ctx.effect(() =>
-    registerEngineRoutes(ctx, {
-      baseUrl,
-      settingsPath,
-      probeTimeoutMs: Math.max(4000, Math.round(positive(config.probeTimeoutMs, 12000))),
-      restart: async () => start(),
-      healthy: probe,
-    }),
-  )
+  //
+  // `webServer` is asked for, not injected: the provider above must work in a
+  // profile that has no Web app at all. On a cold boot that service can mount
+  // after this row, and a single `ctx.get` would then register nothing and leave
+  // every route 404 until the next reload — so wait for it instead of sampling
+  // once.
+  const routes = {
+    baseUrl,
+    settingsPath,
+    probeTimeoutMs: Math.max(4000, Math.round(positive(config.probeTimeoutMs, 12000))),
+    restart: async () => start(),
+    healthy: probe,
+  }
+  ctx.effect(() => {
+    let dispose = ctx.get('webServer') === undefined ? undefined : registerEngineRoutes(ctx, routes)
+    if (dispose !== undefined) return () => dispose()
+
+    let attempts = 0
+    const timer = setInterval(() => {
+      attempts += 1
+      if (ctx.get('webServer') !== undefined) {
+        clearInterval(timer)
+        dispose = registerEngineRoutes(ctx, routes)
+        ctx.logger?.info('searxng-search: webServer appeared late; engine routes registered')
+        return
+      }
+      if (attempts >= 200) {
+        clearInterval(timer)
+        ctx.logger?.warn('searxng-search: webServer never mounted; engine routes are unavailable in this profile')
+      }
+    }, 250)
+
+    return () => {
+      clearInterval(timer)
+      dispose?.()
+    }
+  })
 }
 
 export const inject = ['web']

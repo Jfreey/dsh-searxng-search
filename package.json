@@ -1,6 +1,6 @@
 {
   "name": "dsh-searxng-search",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "One-click local search engine: no API key, free, no tracking. Aggregates several fast engines and picks the best route for your network.",
   "type": "module",
   "exports": {
